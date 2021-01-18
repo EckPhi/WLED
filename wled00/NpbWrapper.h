@@ -14,13 +14,19 @@
 //#define WLED_USE_ANALOG_LEDS //Uncomment for using "dumb" PWM controlled LEDs (see pins below, default R: gpio5, G: 12, B: 15, W: 13)
 //#define WLED_USE_H801 //H801 controller. Please uncomment #define WLED_USE_ANALOG_LEDS as well
 //#define WLED_USE_5CH_LEDS  //5 Channel H801 for cold and warm white
+//#define WLED_USE_BWLT11
+//#define WLED_USE_SHOJO_PCB
 
 #ifndef BTNPIN
 #define BTNPIN  0  //button pin. Needs to have pullup (gpio0 recommended)
 #endif
 
-#ifndef IR_PIN
-#define IR_PIN  4  //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
+#ifndef TOUCHPIN
+//#define TOUCHPIN T0 //touch pin. Behaves the same as button. ESP32 only.
+#endif
+
+#ifndef IRPIN
+#define IRPIN  4  //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
 #endif
 
 #ifndef RLYPIN
@@ -35,11 +41,22 @@
 #define RLYMDE  1  //mode for relay, 0: LOW if LEDs are on 1: HIGH if LEDs are on
 #endif
 
+//enable color order override for a specific range of the strip
+//This can be useful if you want to chain multiple strings with incompatible color order
+//#define COLOR_ORDER_OVERRIDE
+#define COO_MIN    0
+#define COO_MAX   35 //not inclusive, this would set the override for LEDs 0-34
+#define COO_ORDER COL_ORDER_GRB
+
 //END CONFIGURATION
 
 #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
- #define CLKPIN 0
- #define DATAPIN 2
+ #ifndef CLKPIN
+  #define CLKPIN 0
+ #endif
+ #ifndef DATAPIN
+  #define DATAPIN 2
+ #endif
  #if BTNPIN == CLKPIN || BTNPIN == DATAPIN
   #undef BTNPIN   // Deactivate button pin if it conflicts with one of the APA102 pins.
  #endif
@@ -54,27 +71,44 @@
     #define WPIN 14   //W pin for analog LED strip 
     #define W2PIN 04  //W2 pin for analog LED strip
     #undef BTNPIN
-    #undef IR_PIN
-    #define IR_PIN  0 //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
+    #undef IRPIN
+    #define IRPIN  0 //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
   #elif defined(WLED_USE_BWLT11)
   //PWM pins - to use with BW-LT11
     #define RPIN 12  //R pin for analog LED strip
     #define GPIN 4   //G pin for analog LED strip
     #define BPIN 14  //B pin for analog LED strip
     #define WPIN 5   //W pin for analog LED strip
-  #elif defined(SHOJO_PCB)
+  #elif defined(WLED_USE_SHOJO_PCB)
   //PWM pins - to use with Shojo PCB (https://www.bastelbunker.de/esp-rgbww-wifi-led-controller-vbs-edition/)
     #define RPIN 14  //R pin for analog LED strip
     #define GPIN 4   //G pin for analog LED strip
     #define BPIN 5   //B pin for analog LED strip
     #define WPIN 15  //W pin for analog LED strip
     #define W2PIN 12 //W2 pin for analog LED strip
+  #elif defined(WLED_USE_PLJAKOBS_PCB)
+  // PWM pins - to use with esp_rgbww_controller from patrickjahns/pljakobs (https://github.com/pljakobs/esp_rgbww_controller)
+    #define RPIN 12  //R pin for analog LED strip
+    #define GPIN 13  //G pin for analog LED strip
+    #define BPIN 14  //B pin for analog LED strip
+    #define WPIN 4   //W pin for analog LED strip
+    #define W2PIN 5  //W2 pin for analog LED strip
+    #undef IRPIN
   #else
+  //Enable override of Pins by using the platformio_override.ini file
   //PWM pins - PINs 5,12,13,15 are used with Magic Home LED Controller
-    #define RPIN 5   //R pin for analog LED strip
-    #define GPIN 12  //G pin for analog LED strip
-    #define BPIN 15  //B pin for analog LED strip
-    #define WPIN 13  //W pin for analog LED strip
+    #ifndef RPIN
+      #define RPIN 5   //R pin for analog LED strip
+    #endif
+    #ifndef GPIN
+      #define GPIN 12  //G pin for analog LED strip
+    #endif
+    #ifndef BPIN
+      #define BPIN 15  //B pin for analog LED strip
+    #endif
+    #ifndef WPIN
+      #define WPIN 13  //W pin for analog LED strip
+    #endif
   #endif
   #undef RLYPIN
   #define RLYPIN -1 //disable as pin 12 is used by analog LEDs
@@ -124,7 +158,10 @@
  #define PIXELFEATURE4 DotStarLbgrFeature
 #elif defined(USE_LPD8806)
  #define PIXELFEATURE3 Lpd8806GrbFeature 
- #define PIXELFEATURE4 Lpd8806GrbFeature
+ #define PIXELFEATURE4 Lpd8806GrbFeature 
+#elif defined(USE_WS2801)
+ #define PIXELFEATURE3 NeoRbgFeature
+ #define PIXELFEATURE4 NeoRbgFeature
 #elif defined(USE_TM1814)
   #define PIXELFEATURE3 NeoWrgbTm1814Feature
   #define PIXELFEATURE4 NeoWrgbTm1814Feature
@@ -138,6 +175,7 @@
 
 
 #include <NeoPixelBrightnessBus.h>
+#include "const.h"
 
 enum NeoPixelType
 {
@@ -258,7 +296,6 @@ public:
 
   void Show()
   {
-    byte b;
     switch (_type)
     {
       case NeoPixelType_Grb:  _pGrb->Show();  break;
@@ -266,23 +303,57 @@ public:
     }
   }
 
-  void SetPixelColor(uint16_t indexPixel, RgbwColor color)
+  /** 
+   * This will return true if enough time has passed since the last time Show() was called. 
+   * This also means that calling Show() will not cause any undue waiting. If the method for 
+   * the defined bus is hardware that sends asynchronously, then call CanShow() will let 
+   * you know if it has finished sending the data from the last Show().
+   */
+  bool CanShow()
   {
+    switch (_type)
+    {
+      case NeoPixelType_Grb:  return _pGrb->CanShow();
+      case NeoPixelType_Grbw: return _pGrbw->CanShow();
+      default: return true;
+    }
+  }
+
+  void SetPixelColor(uint16_t indexPixel, RgbwColor c)
+  {
+    RgbwColor col;
+
+    uint8_t co = _colorOrder;
+    #ifdef COLOR_ORDER_OVERRIDE
+    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
+    #endif
+
+    //reorder channels to selected order
+    switch (co)
+    {
+      case  0: col.G = c.G; col.R = c.R; col.B = c.B; break; //0 = GRB, default
+      case  1: col.G = c.R; col.R = c.G; col.B = c.B; break; //1 = RGB, common for WS2811
+      case  2: col.G = c.B; col.R = c.R; col.B = c.G; break; //2 = BRG
+      case  3: col.G = c.R; col.R = c.B; col.B = c.G; break; //3 = RBG
+      case  4: col.G = c.B; col.R = c.G; col.B = c.R; break; //4 = BGR
+      default: col.G = c.G; col.R = c.B; col.B = c.R; break; //5 = GBR
+    }
+    col.W = c.W;
+
     switch (_type) {
       case NeoPixelType_Grb: {
-        _pGrb->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+        _pGrb->SetPixelColor(indexPixel, RgbColor(col.R,col.G,col.B));
       }
       break;
       case NeoPixelType_Grbw: {
-        #ifdef USE_LPD8806
-        _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+        #if defined(USE_LPD8806) || defined(USE_WS2801)
+        _pGrbw->SetPixelColor(indexPixel, RgbColor(col.R,col.G,col.B));
         #else
-        _pGrbw->SetPixelColor(indexPixel, color);
+        _pGrbw->SetPixelColor(indexPixel, col);
         #endif
       }
       break;
-    }
-    
+    } 
   }
 
   void SetBrightness(byte b)
@@ -293,13 +364,47 @@ public:
     }
   }
 
-  // NOTE:  Due to feature differences, some support RGBW but the method name
-  // here needs to be unique, thus GetPixeColorRgbw
-  RgbwColor GetPixelColorRgbw(uint16_t indexPixel) const
+  void SetColorOrder(byte colorOrder) {
+    _colorOrder = colorOrder;
+  }
+
+  uint8_t GetColorOrder() {
+    return _colorOrder;
+  }
+
+  RgbwColor GetPixelColorRaw(uint16_t indexPixel) const
   {
     switch (_type) {
       case NeoPixelType_Grb:  return _pGrb->GetPixelColor(indexPixel);  break;
       case NeoPixelType_Grbw: return _pGrbw->GetPixelColor(indexPixel); break;
+    }
+    return 0;
+  }
+
+  // NOTE:  Due to feature differences, some support RGBW but the method name
+  // here needs to be unique, thus GetPixeColorRgbw
+  uint32_t GetPixelColorRgbw(uint16_t indexPixel) const
+  {
+    RgbwColor col(0,0,0,0);
+    switch (_type) {
+      case NeoPixelType_Grb:  col = _pGrb->GetPixelColor(indexPixel);  break;
+      case NeoPixelType_Grbw: col = _pGrbw->GetPixelColor(indexPixel); break;
+    }
+
+    uint8_t co = _colorOrder;
+    #ifdef COLOR_ORDER_OVERRIDE
+    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
+    #endif
+
+    switch (co)
+    {
+      //                    W               G              R               B
+      case  0: return ((col.W << 24) | (col.G << 8) | (col.R << 16) | (col.B)); //0 = GRB, default
+      case  1: return ((col.W << 24) | (col.R << 8) | (col.G << 16) | (col.B)); //1 = RGB, common for WS2811
+      case  2: return ((col.W << 24) | (col.B << 8) | (col.R << 16) | (col.G)); //2 = BRG
+      case  3: return ((col.W << 24) | (col.B << 8) | (col.G << 16) | (col.R)); //3 = RBG
+      case  4: return ((col.W << 24) | (col.R << 8) | (col.B << 16) | (col.G)); //4 = BGR
+      case  5: return ((col.W << 24) | (col.G << 8) | (col.B << 16) | (col.R)); //5 = GBR
     }
     return 0;
   }
@@ -320,6 +425,8 @@ private:
   // have a member for every possible type
   NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>*  _pGrb;
   NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
+
+  byte _colorOrder = 0;
 
   void cleanup()
   {

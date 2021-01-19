@@ -11,7 +11,7 @@
 
 //eeprom Version code, enables default settings instead of 0 init on update
 #define EEPVER 22
-#define EEPSIZE 2560  //Maximum is 4096
+#define EEPSIZE 2560 //Maximum is 4096
 //0 -> old version, default
 //1 -> 0.4p 1711272 and up
 //2 -> 0.4p 1711302 and up
@@ -49,13 +49,13 @@ void clearEEPROM()
   EEPROM.end();
 }
 
-
-void readStringFromEEPROM(uint16_t pos, char* str, uint16_t len)
+void readStringFromEEPROM(uint16_t pos, char *str, uint16_t len)
 {
   for (int i = 0; i < len; ++i)
   {
     str[i] = EEPROM.read(pos + i);
-    if (str[i] == 0) return;
+    if (str[i] == 0)
+      return;
   }
   str[len] = 0; //make sure every string is properly terminated. str must be at least len +1 big.
 }
@@ -72,12 +72,11 @@ void loadSettingsFromEEPROM()
   }
   int lastEEPROMversion = EEPROM.read(377); //last EEPROM version before update
 
-
-  readStringFromEEPROM(  0, clientSSID, 32);
-  readStringFromEEPROM( 32, clientPass, 64);
-  readStringFromEEPROM( 96,      cmDNS, 32);
-  readStringFromEEPROM(128,     apSSID, 32);
-  readStringFromEEPROM(160,     apPass, 64);
+  readStringFromEEPROM(0, clientSSID, 32);
+  readStringFromEEPROM(32, clientPass, 64);
+  readStringFromEEPROM(96, cmDNS, 32);
+  readStringFromEEPROM(128, apSSID, 32);
+  readStringFromEEPROM(160, apPass, 64);
 
   nightlightDelayMinsDefault = EEPROM.read(224);
   nightlightDelayMins = nightlightDelayMinsDefault;
@@ -86,10 +85,14 @@ void loadSettingsFromEEPROM()
   notifyDirect = notifyDirectDefault;
 
   apChannel = EEPROM.read(227);
-  if (apChannel > 13 || apChannel < 1) apChannel = 1;
+  if (apChannel > 13 || apChannel < 1)
+    apChannel = 1;
   apHide = EEPROM.read(228);
-  if (apHide > 1) apHide = 1;
-  ledCount = EEPROM.read(229) + ((EEPROM.read(398) << 8) & 0xFF00); if (ledCount > MAX_LEDS || ledCount == 0) ledCount = 30;
+  if (apHide > 1)
+    apHide = 1;
+  ledCount = EEPROM.read(229) + ((EEPROM.read(398) << 8) & 0xFF00);
+  if (ledCount > MAX_LEDS || ledCount == 0)
+    ledCount = 30;
 
   notifyButton = EEPROM.read(230);
   notifyTwice = EEPROM.read(231);
@@ -108,10 +111,12 @@ void loadSettingsFromEEPROM()
   staticSubnet[2] = EEPROM.read(244);
   staticSubnet[3] = EEPROM.read(245);
 
-  briS = EEPROM.read(249); bri = briS;
+  briS = EEPROM.read(249);
+  bri = briS;
   if (!EEPROM.read(369))
   {
-    bri = 0; briLast = briS;
+    bri = 0;
+    briLast = briS;
   }
   receiveNotificationBrightness = EEPROM.read(250);
   fadeTransition = EEPROM.read(251);
@@ -134,7 +139,8 @@ void loadSettingsFromEEPROM()
   strip.gammaCorrectBri = EEPROM.read(330);
   strip.gammaCorrectCol = EEPROM.read(331);
   overlayDefault = EEPROM.read(332);
-  if (lastEEPROMversion < 8 && overlayDefault > 0) overlayDefault--; //overlay mode 1 (solid) was removed
+  if (lastEEPROMversion < 8 && overlayDefault > 0)
+    overlayDefault--; //overlay mode 1 (solid) was removed
 
   alexaEnabled = EEPROM.read(333);
 
@@ -142,27 +148,30 @@ void loadSettingsFromEEPROM()
 
   notifyAlexa = EEPROM.read(366);
   arlsOffset = EEPROM.read(368);
-  if (!EEPROM.read(367)) arlsOffset = -arlsOffset;
+  if (!EEPROM.read(367))
+    arlsOffset = -arlsOffset;
   turnOnAtBoot = EEPROM.read(369);
   useRGBW = EEPROM.read(372);
   //374 - strip.paletteFade
-  
+
   apBehavior = EEPROM.read(376);
-    
+
   //377 = lastEEPROMversion
-  if (lastEEPROMversion > 3) {
+  if (lastEEPROMversion > 3)
+  {
     aOtaEnabled = EEPROM.read(390);
     receiveNotificationColor = EEPROM.read(391);
     receiveNotificationEffects = EEPROM.read(392);
   }
   receiveNotifications = (receiveNotificationBrightness || receiveNotificationColor || receiveNotificationEffects);
-  
-  if (lastEEPROMversion > 4) {
+
+  if (lastEEPROMversion > 4)
+  {
     huePollingEnabled = EEPROM.read(2048);
     //hueUpdatingEnabled = EEPROM.read(2049);
     for (int i = 2050; i < 2054; ++i)
     {
-      hueIP[i-2050] = EEPROM.read(i);
+      hueIP[i - 2050] = EEPROM.read(i);
     }
 
     readStringFromEEPROM(2054, hueApiKey, 46);
@@ -174,7 +183,8 @@ void loadSettingsFromEEPROM()
     hueApplyColor = EEPROM.read(2105);
     huePollLightId = EEPROM.read(2106);
   }
-  if (lastEEPROMversion > 5) {
+  if (lastEEPROMversion > 5)
+  {
     overlayMin = EEPROM.read(2150);
     overlayMax = EEPROM.read(2151);
     analogClock12pixel = EEPROM.read(2152);
@@ -200,7 +210,8 @@ void loadSettingsFromEEPROM()
     macroCountdown = EEPROM.read(2180);
     macroNl = EEPROM.read(2181);
     macroDoublePress = EEPROM.read(2182);
-    if (macroDoublePress > 16) macroDoublePress = 0;
+    if (macroDoublePress > 16)
+      macroDoublePress = 0;
   }
 
   if (lastEEPROMversion > 6)
@@ -214,18 +225,21 @@ void loadSettingsFromEEPROM()
 
   if (lastEEPROMversion > 7)
   {
-    strip.paletteFade  = EEPROM.read(374);
+    strip.paletteFade = EEPROM.read(374);
     strip.paletteBlend = EEPROM.read(382);
 
     for (int i = 0; i < 8; ++i)
     {
-      timerHours[i]   = EEPROM.read(2260 + i);
+      timerHours[i] = EEPROM.read(2260 + i);
       timerMinutes[i] = EEPROM.read(2270 + i);
       timerWeekday[i] = EEPROM.read(2280 + i);
-      timerMacro[i]   = EEPROM.read(2290 + i);
-      if (timerMacro[i] > 0) timerMacro[i] += 16; //add 16 to work with macro --> preset mapping
-      if (timerWeekday[i] == 0) timerWeekday[i] = 255;
-      if (timerMacro[i] == 0) timerWeekday[i] = timerWeekday[i] & 0b11111110; 
+      timerMacro[i] = EEPROM.read(2290 + i);
+      if (timerMacro[i] > 0)
+        timerMacro[i] += 16; //add 16 to work with macro --> preset mapping
+      if (timerWeekday[i] == 0)
+        timerWeekday[i] = 255;
+      if (timerMacro[i] == 0)
+        timerWeekday[i] = timerWeekday[i] & 0b11111110;
     }
   }
 
@@ -241,10 +255,13 @@ void loadSettingsFromEEPROM()
     strip.setColorOrder(EEPROM.read(383));
     irEnabled = EEPROM.read(385);
     strip.ablMilliampsMax = EEPROM.read(387) + ((EEPROM.read(388) << 8) & 0xFF00);
-  } else if (lastEEPROMversion > 1) //ABL is off by default when updating from version older than 0.8.2
+  }
+  else if (lastEEPROMversion > 1) //ABL is off by default when updating from version older than 0.8.2
   {
     strip.ablMilliampsMax = 65000;
-  } else {
+  }
+  else
+  {
     strip.ablMilliampsMax = ABL_MILLIAMPS_DEFAULT;
   }
 
@@ -259,7 +276,8 @@ void loadSettingsFromEEPROM()
   if (lastEEPROMversion > 11)
   {
     strip.milliampsPerLed = EEPROM.read(375);
-  } else if (strip.ablMilliampsMax == 65000) //65000 indicates disabled ABL in <0.8.7
+  }
+  else if (strip.ablMilliampsMax == 65000) //65000 indicates disabled ABL in <0.8.7
   {
     strip.ablMilliampsMax = ABL_MILLIAMPS_DEFAULT;
     strip.milliampsPerLed = 0; //disable ABL
@@ -272,7 +290,9 @@ void loadSettingsFromEEPROM()
   {
     mqttEnabled = EEPROM.read(2299);
     syncToggleReceive = EEPROM.read(397);
-  } else {
+  }
+  else
+  {
     mqttEnabled = true;
     syncToggleReceive = false;
   }
@@ -281,20 +301,24 @@ void loadSettingsFromEEPROM()
   {
     DMXAddress = EEPROM.read(2197) + ((EEPROM.read(2198) << 8) & 0xFF00);
     DMXMode = EEPROM.read(2199);
-  } else {
+  }
+  else
+  {
     DMXAddress = 1;
     DMXMode = DMX_MODE_MULTIPLE_RGB;
   }
 
   //if (lastEEPROMversion > 15)
   //{
-    noWifiSleep = EEPROM.read(370);
+  noWifiSleep = EEPROM.read(370);
   //}
 
   if (lastEEPROMversion > 17)
   {
     e131SkipOutOfSequence = EEPROM.read(2189);
-  } else {
+  }
+  else
+  {
     e131SkipOutOfSequence = true;
   }
 
@@ -303,17 +327,18 @@ void loadSettingsFromEEPROM()
     e131Port = EEPROM.read(2187) + ((EEPROM.read(2188) << 8) & 0xFF00);
   }
 
-  #ifdef WLED_ENABLE_DMX
+#ifdef WLED_ENABLE_DMX
   if (lastEEPROMversion > 19)
   {
     e131ProxyUniverse = EEPROM.read(2185) + ((EEPROM.read(2186) << 8) & 0xFF00);
   }
-  #endif
+#endif
 
-  if (lastEEPROMversion > 21) {
+  if (lastEEPROMversion > 21)
+  {
     udpPort2 = EEPROM.read(378) + ((EEPROM.read(379) << 8) & 0xFF00);
-  } 
-  
+  }
+
   receiveDirect = !EEPROM.read(2200);
   notifyMacro = EEPROM.read(2201);
 
@@ -324,7 +349,8 @@ void loadSettingsFromEEPROM()
   {
     presetCyclingEnabled = EEPROM.read(2205);
     presetCycleTime = EEPROM.read(2206) + ((EEPROM.read(2207) << 8) & 0xFF00);
-    if (lastEEPROMversion < 21) presetCycleTime /= 100; //was stored in ms, now is in tenths of a second
+    if (lastEEPROMversion < 21)
+      presetCycleTime /= 100; //was stored in ms, now is in tenths of a second
     presetCycleMin = EEPROM.read(2208);
     presetCycleMax = EEPROM.read(2209);
     //was presetApplyBri = EEPROM.read(2210);
@@ -335,7 +361,8 @@ void loadSettingsFromEEPROM()
   bootPreset = EEPROM.read(389);
   wifiLock = EEPROM.read(393);
   utcOffsetSecs = EEPROM.read(394) + ((EEPROM.read(395) << 8) & 0xFF00);
-  if (EEPROM.read(396)) utcOffsetSecs = -utcOffsetSecs; //negative
+  if (EEPROM.read(396))
+    utcOffsetSecs = -utcOffsetSecs; //negative
   //!EEPROM.read(399); was enableSecTransition
 
   //favorite setting (preset) memory (25 slots/ each 20byte)
@@ -345,19 +372,25 @@ void loadSettingsFromEEPROM()
   //1024-2047 reserved
 
   readStringFromEEPROM(2220, blynkApiKey, 35);
-  if (strlen(blynkApiKey) < 25) blynkApiKey[0] = 0;
+  if (strlen(blynkApiKey) < 25)
+    blynkApiKey[0] = 0;
 
-  #ifdef WLED_ENABLE_DMX
-  // DMX (2530 - 2549)2535
+#ifdef WLED_ENABLE_DMX
+  // DMX (2530 - 2552)2535
   DMXChannels = EEPROM.read(2530);
   DMXGap = EEPROM.read(2531) + ((EEPROM.read(2532) << 8) & 0xFF00);
   DMXStart = EEPROM.read(2533) + ((EEPROM.read(2534) << 8) & 0xFF00);
-  
-  for (int i=0;i<15;i++) {
-    DMXFixtureMap[i] = EEPROM.read(2535+i);
+
+  for (int i = 0; i < 15; i++)
+  {
+    DMXFixtureMap[i] = EEPROM.read(2535 + i);
   } //last used: 2549
   DMXStartLED = EEPROM.read(2550);
-  #endif
+#ifndef ESP8266
+  DMXDirectionPin = EEPROM.read(2551);
+  DMXSerialOutputPin = EEPROM.read(2552);
+#endif
+#endif
 
   //Usermod memory
   //2551 - 2559 reserved for Usermods, usable by default
@@ -367,65 +400,75 @@ void loadSettingsFromEEPROM()
   overlayCurrent = overlayDefault;
 }
 
-
 //provided for increased compatibility with usermods written for v0.10
-void applyMacro(byte index) {
-  applyPreset(index+16);
+void applyMacro(byte index)
+{
+  applyPreset(index + 16);
 }
 
-
 // De-EEPROM routine, upgrade from previous versions to v0.11
-void deEEP() {
-  if (WLED_FS.exists("/presets.json")) return;
-  
+void deEEP()
+{
+  if (WLED_FS.exists("/presets.json"))
+    return;
+
   DEBUG_PRINTLN(F("Preset file not found, attempting to load from EEPROM"));
   DEBUGFS_PRINTLN(F("Allocating saving buffer for dEEP"));
-  DynamicJsonDocument dDoc(JSON_BUFFER_SIZE *2);
+  DynamicJsonDocument dDoc(JSON_BUFFER_SIZE * 2);
   JsonObject sObj = dDoc.to<JsonObject>();
   sObj.createNestedObject("0");
 
   EEPROM.begin(EEPSIZE);
-  if (EEPROM.read(233) == 233) { //valid EEPROM save
-    for (uint16_t index = 1; index <= 16; index++) { //copy presets to presets.json
-      uint16_t i = 380 + index*20;
+  if (EEPROM.read(233) == 233)
+  { //valid EEPROM save
+    for (uint16_t index = 1; index <= 16; index++)
+    { //copy presets to presets.json
+      uint16_t i = 380 + index * 20;
       byte ver = EEPROM.read(i);
 
-      if ((index < 16 && ver != 1) || (index == 16 && (ver < 2 || ver > 3))) continue;
+      if ((index < 16 && ver != 1) || (index == 16 && (ver < 2 || ver > 3)))
+        continue;
 
       char nbuf[16];
       sprintf(nbuf, "%d", index);
 
       JsonObject pObj = sObj.createNestedObject(nbuf);
 
-      sprintf_P(nbuf, (char*)F("Preset %d"), index);
+      sprintf_P(nbuf, (char *)F("Preset %d"), index);
       pObj["n"] = nbuf;
 
-      pObj["bri"] = EEPROM.read(i+1);
+      pObj["bri"] = EEPROM.read(i + 1);
 
-      if (index < 16) {
+      if (index < 16)
+      {
         JsonObject segObj = pObj.createNestedObject("seg");
 
         JsonArray colarr = segObj.createNestedArray("col");
 
-        byte numChannels = (useRGBW)? 4:3;
+        byte numChannels = (useRGBW) ? 4 : 3;
 
         for (uint8_t k = 0; k < 3; k++) //k=0 primary (i+2) k=1 secondary (i+6) k=2 tertiary color (i+12)
         {
           JsonArray colX = colarr.createNestedArray();
-          uint16_t memloc = i + 6*k;
-          if (k == 0) memloc += 2;
+          uint16_t memloc = i + 6 * k;
+          if (k == 0)
+            memloc += 2;
 
-          for (byte j = 0; j < numChannels; j++) colX.add(EEPROM.read(memloc + j));
+          for (byte j = 0; j < numChannels; j++)
+            colX.add(EEPROM.read(memloc + j));
         }
-        
-        segObj[F("fx")]  = EEPROM.read(i+10);
-        segObj[F("sx")]  = EEPROM.read(i+11);
-        segObj[F("ix")]  = EEPROM.read(i+16);
-        segObj[F("pal")] = EEPROM.read(i+17);
-      } else {
-        WS2812FX::Segment* seg = strip.getSegments();
-        memcpy(seg, EEPROM.getDataPtr() +i+2, 240);
-        if (ver == 2) { //versions before 2004230 did not have opacity
+
+        segObj[F("fx")] = EEPROM.read(i + 10);
+        segObj[F("sx")] = EEPROM.read(i + 11);
+        segObj[F("ix")] = EEPROM.read(i + 16);
+        segObj[F("pal")] = EEPROM.read(i + 17);
+      }
+      else
+      {
+        WS2812FX::Segment *seg = strip.getSegments();
+        memcpy(seg, EEPROM.getDataPtr() + i + 2, 240);
+        if (ver == 2)
+        { //versions before 2004230 did not have opacity
           for (byte j = 0; j < strip.getMaxSegments(); j++)
           {
             strip.getSegment(j).opacity = 255;
@@ -440,12 +483,12 @@ void deEEP() {
       }
     }
 
-    
-    
-    for (uint16_t index = 1; index <= 16; index++) { //copy macros to presets.json
+    for (uint16_t index = 1; index <= 16; index++)
+    { //copy macros to presets.json
       char m[65];
-      readStringFromEEPROM(1024+64*(index-1), m, 64);
-      if (m[0]) { //macro exists
+      readStringFromEEPROM(1024 + 64 * (index - 1), m, 64);
+      if (m[0])
+      { //macro exists
         char nbuf[16];
         sprintf(nbuf, "%d", index + 16);
         JsonObject pObj = sObj.createNestedObject(nbuf);
@@ -459,7 +502,8 @@ void deEEP() {
   EEPROM.end();
 
   File f = WLED_FS.open("/presets.json", "w");
-  if (!f) {
+  if (!f)
+  {
     errorFlag = ERR_FS_GENERAL;
     return;
   }
@@ -468,7 +512,8 @@ void deEEP() {
   DEBUG_PRINTLN(F("deEEP complete!"));
 }
 
-void deEEPSettings() {
+void deEEPSettings()
+{
   DEBUG_PRINTLN(F("Restore settings from EEPROM"));
   EEPROM.begin(EEPSIZE);
   loadSettingsFromEEPROM();

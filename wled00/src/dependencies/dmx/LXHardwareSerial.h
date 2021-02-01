@@ -55,7 +55,6 @@ class LXHardwareSerial : public HardwareSerial {
 	
 	private:
 	uint8_t _tx_gpio_pin;
-	uint8_t _rx_gpio_pin;
 };
 
 void uartWaitFIFOEmpty(uart_t* uart);

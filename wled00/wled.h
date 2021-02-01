@@ -267,11 +267,6 @@ WLED_GLOBAL bool arlsDisableGammaCorrection _INIT(true); // activate if gamma co
 WLED_GLOBAL bool arlsForceMaxBri _INIT(false);           // enable to force max brightness if source has very dark colors that would be black
 
 #ifdef WLED_ENABLE_DMX
-#ifdef ESP8266
-WLED_GLOBAL DMXESPSerial dmx;
-#else
-Add Global ESP32
-#endif
 WLED_GLOBAL uint16_t e131ProxyUniverse _INIT(0); // output this E1.31 (sACN) / ArtNet universe via MAX485 (0 = disabled)
 #endif
 WLED_GLOBAL uint16_t e131Universe _INIT(1);                       // settings for E1.31 (sACN) protocol (only DMX_MODE_MULTIPLE_* can span over consequtive universes)
@@ -335,7 +330,7 @@ WLED_GLOBAL bool aOtaEnabled _INIT(true); // ArduinoOTA allows easy updates dire
 WLED_GLOBAL uint16_t userVar0 _INIT(0), userVar1 _INIT(0); //available for use in usermod
 
 #ifdef WLED_ENABLE_DMX
-    // dmx CONFIG
+// dmx CONFIG
 WLED_GLOBAL byte DMXChannels _INIT(7); // number of channels per fixture
 WLED_GLOBAL byte DMXFixtureMap[15] _INIT_N(({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
 // assigns the different channels to different functions. See wled21_dmx.ino for more information.
@@ -343,9 +338,9 @@ WLED_GLOBAL uint16_t DMXGap _INIT(10);     // gap between the fixtures. makes ad
 WLED_GLOBAL uint16_t DMXStart _INIT(10);   // start address of the first fixture
 WLED_GLOBAL uint16_t DMXStartLED _INIT(0); // LED from which DMX fixtures start
 #ifndef ESP8266
-WLED_GLOBAL uint16_t DMXDirectionPin _INIT(21);    // output enable
-WLED_GLOBAL uint16_t DMXSerialOutputPin _INIT(17); // data pin
-#endif                                             // ESP32
+WLED_GLOBAL byte DMXDirectionPin _INIT(21);    // output enable
+WLED_GLOBAL byte DMXSerialOutputPin _INIT(17); // data pin
+#endif                                         // ESP32
 #endif
 
 // internal global variable declarations

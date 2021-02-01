@@ -8,12 +8,15 @@
  */
 
 #ifdef WLED_ENABLE_DMX
-#ifndef ESP8266
+#ifdef ESP8266
+#include "src/dependencies/dmx/ESPDMX.h"
+DMXESPSerial dmx;
+#else
 static uint8_t dmxbuffer[DMX_MAX_FRAME];
 static bool changed = true;
 #endif // ESP32
 
-static void applyColorsToDMX(void)
+void updateDMX(void)
 {
 #ifdef ESP8266
   dmx.update(); // update the DMX bus
@@ -32,7 +35,7 @@ static void applyColorsToDMX(void)
   DEBUG_PRINTLN("Sent colors via DMX");
 }
 
-static void setDMX(uint16_t DMXAddr, byte value)
+void setDMX(uint16_t DMXAddr, byte value)
 {
 #ifdef ESP8266
   dmx.write(DMXAddr, value);
@@ -101,7 +104,7 @@ void handleDMX()
     }
   }
 
-  applyColorsToDMX(); // apply new colors to the DMX bus
+  updateDMX(); // apply new colors to the DMX bus
 }
 
 void initDMX()

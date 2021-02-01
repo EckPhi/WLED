@@ -83,16 +83,16 @@ void handleDMX()
         setDMX(DMXAddr, 0);
         break;
       case 1: // Red
-        setDMX(DMXAddr, calc_brightness ? (r * brightness) / 255 : r);
+        setDMX(DMXAddr, calcBrightness ? (r * brightness) / 255 : r);
         break;
       case 2: // Green
-        setDMX(DMXAddr, calc_brightness ? (g * brightness) / 255 : g);
+        setDMX(DMXAddr, calcBrightness ? (g * brightness) / 255 : g);
         break;
       case 3: // Blue
-        setDMX(DMXAddr, calc_brightness ? (b * brightness) / 255 : b);
+        setDMX(DMXAddr, calcBrightness ? (b * brightness) / 255 : b);
         break;
       case 4: // White
-        setDMX(DMXAddr, calc_brightness ? (w * brightness) / 255 : w);
+        setDMX(DMXAddr, calcBrightness ? (w * brightness) / 255 : w);
         break;
       case 5: // Shutter channel. Controls the brightness.
         setDMX(DMXAddr, brightness);

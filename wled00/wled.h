@@ -101,7 +101,7 @@ extern "C"
 #ifdef ESP8266
 #include "src/dependencies/dmx/ESPDMX.h"
 #else
-#include "src/dependencies/dmx/LXESP32DMX.h"
+#include "src/dependencies/dmx/LXESP32DMX/src/LXESP32DMX.h"
 #endif
 #endif
 

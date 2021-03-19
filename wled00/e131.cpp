@@ -42,10 +42,10 @@ void handleDDPPacket(e131_packet_t *p)
     c = 4; //packet has timecode flag, we do not support it, but data starts 4 bytes later
 
   realtimeLock(realtimeTimeoutMs, REALTIME_MODE_DDP);
-
-  for (uint16_t i = start; i < stop; i++)
-  {
-    setRealtimePixel(i, data[c++], data[c++], data[c++], 0);
+  
+  for (uint16_t i = start; i < stop; i++) {
+    setRealtimePixel(i, data[c], data[c+1], data[c+2], 0);
+    c+=3;
   }
 
   bool push = p->flags & DDP_PUSH_FLAG;
@@ -233,7 +233,39 @@ void handleE131Packet(e131_packet_t *p, IPAddress clientIP, byte protocol)
     {
       for (uint16_t i = previousLeds; i < ledsTotal; i++)
       {
-        setRealtimePixel(i, e131_data[dmxOffset++], e131_data[dmxOffset++], e131_data[dmxOffset++], e131_data[dmxOffset++]);
+        realtimeLock(realtimeTimeoutMs, mde);
+        bool is4Chan = (DMXMode == DMX_MODE_MULTIPLE_RGBW);
+        const uint16_t dmxChannelsPerLed = is4Chan ? 4 : 3;
+        const uint16_t ledsPerUniverse = is4Chan ? MAX_4_CH_LEDS_PER_UNIVERSE : MAX_3_CH_LEDS_PER_UNIVERSE;
+        if (realtimeOverride) return;
+        uint16_t previousLeds, dmxOffset;
+        if (previousUniverses == 0) {
+          if (dmxChannels-DMXAddress < 1) return;
+          dmxOffset = DMXAddress;
+          previousLeds = 0;
+          // First DMX address is dimmer in DMX_MODE_MULTIPLE_DRGB mode.
+          if (DMXMode == DMX_MODE_MULTIPLE_DRGB) {
+            strip.setBrightness(e131_data[dmxOffset++]);
+          }
+        } else {
+          // All subsequent universes start at the first channel.
+          dmxOffset = (protocol == P_ARTNET) ? 0 : 1;
+          uint16_t ledsInFirstUniverse = (MAX_CHANNELS_PER_UNIVERSE - DMXAddress) / dmxChannelsPerLed;
+          previousLeds = ledsInFirstUniverse + (previousUniverses - 1) * ledsPerUniverse;
+        }
+        uint16_t ledsTotal = previousLeds + (dmxChannels - dmxOffset +1) / dmxChannelsPerLed;
+        if (!is4Chan) {
+          for (uint16_t i = previousLeds; i < ledsTotal; i++) {
+            setRealtimePixel(i, e131_data[dmxOffset], e131_data[dmxOffset+1], e131_data[dmxOffset+2], 0);
+            dmxOffset+=3;
+          }
+        } else {
+          for (uint16_t i = previousLeds; i < ledsTotal; i++) {
+            setRealtimePixel(i, e131_data[dmxOffset], e131_data[dmxOffset+1], e131_data[dmxOffset+2], e131_data[dmxOffset+3]);
+            dmxOffset+=4;
+          }
+        }
+        break;
       }
     }
     break;
